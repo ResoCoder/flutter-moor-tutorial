@@ -7,12 +7,16 @@ part of 'moor_database.dart';
 // **************************************************************************
 
 // ignore_for_file: unnecessary_brace_in_string_interps
-class Task extends DataClass {
+class Task extends DataClass implements Insertable<Task> {
   final int id;
   final String name;
   final DateTime dueDate;
   final bool completed;
-  Task({this.id, this.name, this.dueDate, this.completed});
+  Task(
+      {@required this.id,
+      @required this.name,
+      this.dueDate,
+      @required this.completed});
   factory Task.fromData(Map<String, dynamic> data, GeneratedDatabase db,
       {String prefix}) {
     final effectivePrefix = prefix ?? '';
@@ -49,6 +53,20 @@ class Task extends DataClass {
     };
   }
 
+  @override
+  T createCompanion<T extends UpdateCompanion<Task>>(bool nullToAbsent) {
+    return TasksCompanion(
+      id: id == null && nullToAbsent ? const Value.absent() : Value(id),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      dueDate: dueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueDate),
+      completed: completed == null && nullToAbsent
+          ? const Value.absent()
+          : Value(completed),
+    ) as T;
+  }
+
   Task copyWith({int id, String name, DateTime dueDate, bool completed}) =>
       Task(
         id: id ?? this.id,
@@ -81,10 +99,24 @@ class Task extends DataClass {
           other.completed == completed);
 }
 
+class TasksCompanion extends UpdateCompanion<Task> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<DateTime> dueDate;
+  final Value<bool> completed;
+  const TasksCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.completed = const Value.absent(),
+  });
+}
+
 class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   final GeneratedDatabase _db;
   final String _alias;
   $TasksTable(this._db, [this._alias]);
+  final VerificationMeta _idMeta = const VerificationMeta('id');
   GeneratedIntColumn _id;
   @override
   GeneratedIntColumn get id => _id ??= _constructId();
@@ -92,6 +124,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     return GeneratedIntColumn('id', $tableName, false, hasAutoIncrement: true);
   }
 
+  final VerificationMeta _nameMeta = const VerificationMeta('name');
   GeneratedTextColumn _name;
   @override
   GeneratedTextColumn get name => _name ??= _constructName();
@@ -100,6 +133,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         minTextLength: 1, maxTextLength: 50);
   }
 
+  final VerificationMeta _dueDateMeta = const VerificationMeta('dueDate');
   GeneratedDateTimeColumn _dueDate;
   @override
   GeneratedDateTimeColumn get dueDate => _dueDate ??= _constructDueDate();
@@ -111,6 +145,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     );
   }
 
+  final VerificationMeta _completedMeta = const VerificationMeta('completed');
   GeneratedBoolColumn _completed;
   @override
   GeneratedBoolColumn get completed => _completed ??= _constructCompleted();
@@ -128,11 +163,35 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   @override
   final String actualTableName = 'tasks';
   @override
-  bool validateIntegrity(Task instance, bool isInserting) =>
-      id.isAcceptableValue(instance.id, isInserting) &&
-      name.isAcceptableValue(instance.name, isInserting) &&
-      dueDate.isAcceptableValue(instance.dueDate, isInserting) &&
-      completed.isAcceptableValue(instance.completed, isInserting);
+  VerificationContext validateIntegrity(TasksCompanion d,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    if (d.id.present) {
+      context.handle(_idMeta, id.isAcceptableValue(d.id.value, _idMeta));
+    } else if (id.isRequired && isInserting) {
+      context.missing(_idMeta);
+    }
+    if (d.name.present) {
+      context.handle(
+          _nameMeta, name.isAcceptableValue(d.name.value, _nameMeta));
+    } else if (name.isRequired && isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (d.dueDate.present) {
+      context.handle(_dueDateMeta,
+          dueDate.isAcceptableValue(d.dueDate.value, _dueDateMeta));
+    } else if (dueDate.isRequired && isInserting) {
+      context.missing(_dueDateMeta);
+    }
+    if (d.completed.present) {
+      context.handle(_completedMeta,
+          completed.isAcceptableValue(d.completed.value, _completedMeta));
+    } else if (completed.isRequired && isInserting) {
+      context.missing(_completedMeta);
+    }
+    return context;
+  }
+
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
@@ -142,19 +201,19 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   }
 
   @override
-  Map<String, Variable> entityToSql(Task d, {bool includeNulls = false}) {
+  Map<String, Variable> entityToSql(TasksCompanion d) {
     final map = <String, Variable>{};
-    if (d.id != null || includeNulls) {
-      map['id'] = Variable<int, IntType>(d.id);
+    if (d.id.present) {
+      map['id'] = Variable<int, IntType>(d.id.value);
     }
-    if (d.name != null || includeNulls) {
-      map['name'] = Variable<String, StringType>(d.name);
+    if (d.name.present) {
+      map['name'] = Variable<String, StringType>(d.name.value);
     }
-    if (d.dueDate != null || includeNulls) {
-      map['due_date'] = Variable<DateTime, DateTimeType>(d.dueDate);
+    if (d.dueDate.present) {
+      map['due_date'] = Variable<DateTime, DateTimeType>(d.dueDate.value);
     }
-    if (d.completed != null || includeNulls) {
-      map['completed'] = Variable<bool, BoolType>(d.completed);
+    if (d.completed.present) {
+      map['completed'] = Variable<bool, BoolType>(d.completed.value);
     }
     return map;
   }
@@ -169,6 +228,37 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(const SqlTypeSystem.withDefaults(), e);
   $TasksTable _tasks;
   $TasksTable get tasks => _tasks ??= $TasksTable(this);
+  TaskDao _taskDao;
+  TaskDao get taskDao => _taskDao ??= TaskDao(this as AppDatabase);
   @override
   List<TableInfo> get allTables => [tasks];
+}
+
+// **************************************************************************
+// DaoGenerator
+// **************************************************************************
+
+mixin _$TaskDaoMixin on DatabaseAccessor<AppDatabase> {
+  $TasksTable get tasks => db.tasks;
+  Task _rowToTask(QueryRow row) {
+    return Task(
+      id: row.readInt('id'),
+      name: row.readString('name'),
+      dueDate: row.readDateTime('due_date'),
+      completed: row.readBool('completed'),
+    );
+  }
+
+  Future<List<Task>> completedTasksGenerated({QueryEngine operateOn}) {
+    return (operateOn ?? this).customSelect(
+        'SELECT * FROM tasks WHERE completed = 1 ORDER BY due_date DESC, name;',
+        variables: []).then((rows) => rows.map(_rowToTask).toList());
+  }
+
+  Stream<List<Task>> watchCompletedTasksGenerated() {
+    return customSelectStream(
+        'SELECT * FROM tasks WHERE completed = 1 ORDER BY due_date DESC, name;',
+        variables: [],
+        readsFrom: {tasks}).map((rows) => rows.map(_rowToTask).toList());
+  }
 }
