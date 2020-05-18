@@ -69,7 +69,7 @@ class TaskDao extends DatabaseAccessor<AppDatabase> with _$TaskDaoMixin {
                   OrderingTerm(expression: t.dueDate, mode: OrderingMode.desc),
               (t) => OrderingTerm(expression: t.name),
             ],
-          ))
+          )
         .join(
           [
             leftOuterJoin(tags, tags.name.equalsExp(tasks.tagName)),
